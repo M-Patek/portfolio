@@ -37,7 +37,7 @@
   --text-primary: #f5f5f7;
   --text-secondary: #a1a1a6;
   --accent-claude: #e88d6c; 
-  --cursor-color: #a68a7f; 
+  --cursor-color: var(--accent-claude); 
   --quote-bg: rgba(232, 141, 108, 0.08);
   
   /* Mac Window - Dark */
@@ -72,13 +72,54 @@
 html, body {
   margin: 0; padding: 0; width: 100%; height: 100%;
   background-color: var(--bg-claude);
-  cursor: none !important;
+  cursor: none;
+}
+
+@media (pointer: coarse) {
+  html, body { cursor: auto !important; }
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   color: var(--text-primary); line-height: 1.5; overflow-x: hidden;
 }
+
+.philosophy-stack-wrapper.mobile-scroll {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: auto;
+  gap: 20px;
+  padding: 20px 0 40px 0;
+  perspective: none;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.philosophy-stack-wrapper.mobile-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.philosophy-stack-wrapper.mobile-scroll .philosophy-card.stacked {
+  position: relative;
+  flex: 0 0 85vw;
+  height: auto;
+  min-height: 450px;
+  scroll-snap-align: center;
+  transform: none !important;
+  opacity: 1 !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+@media (max-width: 768px) {
+  .hero-full-screen { height: auto; padding: 100px 0; }
+  .single-window-section { margin-bottom: 60px; }
+  .philosophy-section-container { margin: 60px auto; }
+  .philosophy-card { padding: 40px 30px; border-radius: 24px; }
+  .projects-grid { grid-template-columns: 1fr; }
+  .section-header-left h2 { text-align: center; width: 100%; }
+}
+
 
 .page-wrapper {
   position: relative; min-height: 100vh; width: 100%;
@@ -114,7 +155,7 @@ body {
   font-family: "Charter", "Georgia", serif;
   font-size: clamp(2.2rem, 6vw, 4rem);
   font-weight: 500; line-height: 1.2;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.15em;
 }
 
 .subtitle-text {

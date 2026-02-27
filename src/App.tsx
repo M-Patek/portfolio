@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring, type Variants } from 'framer-motion';
-import { Mail, Folder, Github, Twitter, ExternalLink, Monitor, Shield } from 'lucide-react';
+import { Mail, Folder, Github, ExternalLink, Monitor, Shield } from 'lucide-react';
 import './App.css';
+
+// X (formerly Twitter) Icon Component
+const XIcon = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+  </svg>
+);
 
 // 1. Magnetic Character Component
 const MagneticChar = ({ children, factor = 0.1 }: { children: string, factor?: number }) => {
@@ -75,13 +82,57 @@ const Magnetic = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// 3. Claude Cursor
+// 3. Proximity Rise Component for individual characters
+const ProximityRiseChar = ({ children }: { children: string }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const y = useMotionValue(0);
+  const springY = useSpring(y, { stiffness: 120, damping: 15 });
+
+  useEffect(() => {
+    const calculateDistance = (e: MouseEvent) => {
+      if (!ref.current || window.matchMedia('(max-width: 768px)').matches) return;
+      const rect = ref.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const distance = Math.sqrt((e.clientX - centerX) ** 2 + (e.clientY - centerY) ** 2);
+      const radius = 250;
+      if (distance < radius) {
+        const power = Math.pow((radius - distance) / radius, 1.5);
+        y.set(-35 * power); 
+      } else {
+        y.set(0);
+      }
+    };
+    window.addEventListener('mousemove', calculateDistance);
+    return () => window.removeEventListener('mousemove', calculateDistance);
+  }, []);
+
+  return (
+    <motion.span ref={ref} style={{ y: springY, display: 'inline-block', whiteSpace: 'pre' }}>
+      {children}
+    </motion.span>
+  );
+};
+
+const ProximityRiseText = ({ text }: { text: string }) => (
+  <>
+    {text.split('').map((char, i) => (
+      <ProximityRiseChar key={i}>{char}</ProximityRiseChar>
+    ))}
+  </>
+);
+
+// 4. Claude Cursor
 const ClaudeCursor = () => {
+  const [isMobile, setIsMobile] = useState(false);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
   useEffect(() => {
+    const checkMobile = () => setIsMobile(window.matchMedia('(max-width: 768px) or (pointer: coarse)').matches);
+    checkMobile();
     const moveMouse = (e: MouseEvent) => {
+      if (isMobile) return;
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
       document.documentElement.style.setProperty('--mouse-x', `${(e.clientX / window.innerWidth) * 100}%`);
@@ -89,7 +140,9 @@ const ClaudeCursor = () => {
     };
     window.addEventListener('mousemove', moveMouse);
     return () => window.removeEventListener('mousemove', moveMouse);
-  }, []);
+  }, [isMobile]);
+
+  if (isMobile) return null;
 
   return (
     <motion.div className="custom-cursor" style={{ x: mouseX, y: mouseY }}>
@@ -116,7 +169,7 @@ const MeshGradient = ({ theme }: { theme: 'light' | 'dark' }) => (
 const content = {
   cn: {
     title: "艺术与工程的交汇点",
-    subtitle: "—— 在这里，代码是我的笔触，美学是我的逻辑。",
+    subtitle: "—— 代码是笔触，美学是逻辑",
     windowTitle: "选择你的旅途",
     philosophyTitle: "哲学与范式",
     practiceTitle: "实践与探索",
@@ -129,7 +182,7 @@ const content = {
   },
   en: {
     title: "Convergence of Art & Engineering",
-    subtitle: "—— Where code is my brush, and aesthetics my logic.",
+    subtitle: "—— Code is brush, aesthetics is logic",
     windowTitle: "Choose Your Journey",
     philosophyTitle: "Philosophy & Paradigms",
     practiceTitle: "Practice & Exploration",
@@ -146,12 +199,20 @@ function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [lang, setLang] = useState<'cn' | 'en'>('cn');
   const [activePhilosophy, setActivePhilosophy] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   
   const isHoveringRef = useRef(false);
   const activeIndexRef = useRef(0);
   const scrollAccumulator = useRef(0);
   const isAnimating = useRef(false);
   const lastScrollTime = useRef(0);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => { activeIndexRef.current = activePhilosophy; }, [activePhilosophy]);
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
@@ -160,12 +221,10 @@ function App() {
 
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
-      if (!isHoveringRef.current) return;
+      if (!isHoveringRef.current || isMobile) return;
       const delta = e.deltaY;
       const now = Date.now();
       
-      // STRICT LOCK: When hovering cards, we intercept wheel events to prevent page scroll jitter.
-      // We only release lock if we are at the boundaries.
       if (activeIndexRef.current === 0 && delta < 0) return;
       if (activeIndexRef.current === 2 && delta > 0) return;
 
@@ -178,7 +237,6 @@ function App() {
       lastScrollTime.current = now;
       scrollAccumulator.current += delta;
 
-      // Lower threshold for more responsive "snappy" feel
       const threshold = 100;
       if (Math.abs(scrollAccumulator.current) >= threshold) {
         const direction = scrollAccumulator.current > 0 ? 1 : -1;
@@ -194,7 +252,7 @@ function App() {
     };
     window.addEventListener('wheel', handleGlobalWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleGlobalWheel);
-  }, []);
+  }, [isMobile]);
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const toggleLang = () => setLang(prev => prev === 'cn' ? 'en' : 'cn');
@@ -204,6 +262,18 @@ function App() {
     { title: lang === 'cn' ? "数字实验室 002" : "Digital Lab 002", icon: <Shield size={28} />, tech: "Visual Philosophy", tag: "Library" },
     { title: lang === 'cn' ? "数字实验室 003" : "Digital Lab 003", icon: <Folder size={28} />, tech: "Human Interaction", tag: "Core" }
   ];
+
+  const cardAnimation = (index: number) => {
+    if (isMobile) return {}; // Mobile uses native scroll
+    return {
+      x: activePhilosophy > index ? '-130%' : 0,
+      y: activePhilosophy === index ? 0 : (index - activePhilosophy) * 20 + 20,
+      scale: activePhilosophy === index ? 1 : 1 - Math.abs(index - activePhilosophy) * 0.05,
+      opacity: activePhilosophy > index ? 0 : 1 - Math.abs(index - activePhilosophy) * 0.2,
+      zIndex: 100 - index,
+      rotateY: activePhilosophy === index ? 0 : -5 * (index - activePhilosophy)
+    };
+  };
 
   return (
     <div className="page-wrapper">
@@ -227,7 +297,9 @@ function App() {
 
       <section className="single-window-section" style={{ flexDirection: 'column', alignItems: 'center' }}>
         <div className="section-header-left">
-          <motion.h2 variants={statelyReveal} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.2rem, 5vw, 3rem)', marginBottom: '40px' }}>{t.windowTitle}</motion.h2>
+          <motion.h2 variants={statelyReveal} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.2rem, 5vw, 3rem)', marginBottom: '40px' }}>
+            <ProximityRiseText text={t.windowTitle} />
+          </motion.h2>
         </div>
         <motion.div className="code-window single-interface" variants={statelyReveal} initial="hidden" whileInView="visible" viewport={{ once: true }} whileHover={{ y: -10 }}>
           <div className="code-header">
@@ -250,10 +322,12 @@ function App() {
 
       <section className="philosophy-section-container">
         <div className="section-header-left">
-          <motion.h2 variants={statelyReveal} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.2rem, 5vw, 3rem)' }}>{t.philosophyTitle}</motion.h2>
+          <motion.h2 variants={statelyReveal} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.2rem, 5vw, 3rem)' }}>
+            <ProximityRiseText text={t.philosophyTitle} />
+          </motion.h2>
         </div>
-        <div className="philosophy-stack-wrapper" onMouseEnter={() => { isHoveringRef.current = true; }} onMouseLeave={() => { isHoveringRef.current = false; scrollAccumulator.current = 0; }}>
-          <motion.div className="philosophy-card glass stacked" animate={{ x: activePhilosophy > 0 ? '-130%' : 0, y: activePhilosophy === 0 ? 0 : 20, scale: activePhilosophy === 0 ? 1 : 0.95, opacity: activePhilosophy > 0 ? 0 : 1, zIndex: 100 }} transition={{ type: 'spring', stiffness: 200, damping: 25 }} whileHover={activePhilosophy === 0 ? { y: -8 } : {}}>
+        <div className={`philosophy-stack-wrapper ${isMobile ? 'mobile-scroll' : ''}`} onMouseEnter={() => { isHoveringRef.current = true; }} onMouseLeave={() => { isHoveringRef.current = false; scrollAccumulator.current = 0; }}>
+          <motion.div className="philosophy-card glass stacked" animate={cardAnimation(0)} transition={{ type: 'spring', stiffness: 200, damping: 25 }} whileHover={!isMobile && activePhilosophy === 0 ? { y: -8 } : {}}>
             <span className="manifesto-tag">{t.chapter1.tag}</span>
             <h2 className="manifesto-title" style={{ color: 'var(--accent-claude)' }}>{t.chapter1.title}</h2>
             <div className="manifesto-text">
@@ -263,12 +337,12 @@ function App() {
               </div>
             </div>
           </motion.div>
-          <motion.div className="philosophy-card glass stacked" animate={{ x: activePhilosophy > 1 ? '-130%' : 0, y: activePhilosophy === 1 ? 0 : (1 - activePhilosophy) * 20 + 20, scale: activePhilosophy === 1 ? 1 : 1 - Math.abs(1 - activePhilosophy) * 0.05, opacity: activePhilosophy > 1 ? 0 : 1 - Math.abs(1 - activePhilosophy) * 0.2, zIndex: 99, rotateY: activePhilosophy === 1 ? 0 : -5 }} transition={{ type: 'spring', stiffness: 200, damping: 25 }} whileHover={activePhilosophy === 1 ? { y: -8 } : {}}>
+          <motion.div className="philosophy-card glass stacked" animate={cardAnimation(1)} transition={{ type: 'spring', stiffness: 200, damping: 25 }} whileHover={!isMobile && activePhilosophy === 1 ? { y: -8 } : {}}>
             <span className="manifesto-tag">{t.chapter2.tag}</span>
             <h2 className="manifesto-title" style={{ color: 'var(--accent-claude)' }}>{t.chapter2.title}</h2>
             <div className="manifesto-text"><p>{t.chapter2.text}</p><p style={{ marginTop: '24px' }}>{t.chapter2.desc}</p></div>
           </motion.div>
-          <motion.div className="philosophy-card glass stacked" animate={{ x: 0, y: activePhilosophy === 2 ? 0 : (2 - activePhilosophy) * 20, scale: activePhilosophy === 2 ? 1 : 1 - (2 - activePhilosophy) * 0.05, opacity: 1 - (2 - activePhilosophy) * 0.2, zIndex: 98, rotateY: activePhilosophy === 2 ? 0 : -10 }} transition={{ type: 'spring', stiffness: 200, damping: 25 }} whileHover={activePhilosophy === 2 ? { y: -8 } : {}}>
+          <motion.div className="philosophy-card glass stacked" animate={cardAnimation(2)} transition={{ type: 'spring', stiffness: 200, damping: 25 }} whileHover={!isMobile && activePhilosophy === 2 ? { y: -8 } : {}}>
             <span className="manifesto-tag">{t.chapter3.tag}</span>
             <h2 className="manifesto-title" style={{ color: 'var(--accent-claude)' }}>{t.chapter3.title}</h2>
             <div className="manifesto-text"><p>{t.chapter3.text}</p><div className="manifesto-footer">{t.chapter3.footer}</div></div>
@@ -278,7 +352,9 @@ function App() {
 
       <section id="work" style={{ alignItems: 'flex-start' }}>
         <div className="section-header-left">
-          <motion.h2 variants={statelyReveal} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.2rem, 5vw, 3rem)', marginBottom: '40px' }}>{t.practiceTitle}</motion.h2>
+          <motion.h2 variants={statelyReveal} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.2rem, 5vw, 3rem)', marginBottom: '40px' }}>
+            <ProximityRiseText text={t.practiceTitle} />
+          </motion.h2>
         </div>
         <div className="projects-grid">
           {projects.map((project, i) => (
@@ -297,12 +373,12 @@ function App() {
 
       <section style={{ textAlign: 'center', margin: '150px 0 250px 0' }}>
         <motion.h2 variants={statelyReveal} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.2rem, 5vw, 3rem)', marginBottom: '40px' }}>
-          <SplitText text={t.resonance} factor={0.2} />
+          <ProximityRiseText text={t.resonance} />
         </motion.h2>
         <div style={{ display: 'flex', gap: '50px', justifyContent: 'center', marginBottom: '60px' }}>
-          <Magnetic><motion.a whileHover={{ scale: 1.25, color: 'var(--accent-claude)' }} href="#"><Github size={32} /></motion.a></Magnetic>
-          <Magnetic><motion.a whileHover={{ scale: 1.25, color: 'var(--accent-claude)' }} href="#"><Twitter size={32} /></motion.a></Magnetic>
-          <Magnetic><motion.a whileHover={{ scale: 1.25, color: 'var(--accent-claude)' }} href="#"><Mail size={32} /></motion.a></Magnetic>
+          <Magnetic><motion.a whileHover={{ scale: 1.25, color: 'var(--accent-claude)' }} href="https://github.com/M-Patek" target="_blank" rel="noopener noreferrer"><Github size={32} /></motion.a></Magnetic>
+          <Magnetic><motion.a whileHover={{ scale: 1.25, color: 'var(--accent-claude)' }} href="https://x.com/M_I3reak" target="_blank" rel="noopener noreferrer"><XIcon size={32} /></motion.a></Magnetic>
+          <Magnetic><motion.a whileHover={{ scale: 1.25, color: 'var(--accent-claude)' }} href="mailto:monetwl@outlook.com"><Mail size={32} /></motion.a></Magnetic>
         </div>
         <motion.div className="bottom-philosophy-quote">
           <SplitText text={t.bottomQuote} factor={0.08} />
