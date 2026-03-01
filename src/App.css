@@ -1,16 +1,16 @@
 :root {
-  /* Light Theme (Default) */
+  /* Light Theme (Default) - 精准 Claude 纸张色 */
   --bg-claude: #fbfaf8;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --grid-line: rgba(0, 0, 0, 0.025);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-blur: blur(40px);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --grid-line: rgba(0, 0, 0, 0.02);
   --text-primary: #1d1d1f;
   --text-secondary: #6e6e73;
   --accent-claude: #d97757; 
   --cursor-color: var(--accent-claude);
   --quote-bg: rgba(217, 119, 87, 0.04);
   
-  /* Mac Window - Light */
   --code-bg: #ffffff;
   --code-header-bg: #f5f5f7;
   --code-text: #323232;
@@ -31,8 +31,9 @@
 
 [data-theme='dark'] {
   --bg-claude: #1c1c1c; 
-  --glass-bg: #242424; 
-  --glass-border: rgba(255, 255, 255, 0.1); 
+  --glass-bg: rgba(28, 28, 30, 0.5); 
+  --glass-blur: blur(60px);
+  --glass-border: rgba(255, 255, 255, 0.08); 
   --grid-line: rgba(255, 255, 255, 0.02);
   --text-primary: #f5f5f7;
   --text-secondary: #a1a1a6;
@@ -40,7 +41,6 @@
   --cursor-color: var(--accent-claude); 
   --quote-bg: rgba(232, 141, 108, 0.08);
   
-  /* Mac Window - Dark */
   --code-bg: #242424; 
   --code-header-bg: #323232;
   --code-text: #e0e0e0;
@@ -66,71 +66,80 @@
 * {
   margin: 0; padding: 0; box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
-html, body {
-  margin: 0; padding: 0; width: 100%; height: 100%;
-  background-color: var(--bg-claude);
-  cursor: none;
+/* 全局强制隐藏原生鼠标：统一桌面级极致体验 */
+html, body, *, button, a, [role="button"], .nav-link, .project-card, .philosophy-card {
+  cursor: none !important;
 }
 
+/* 仅在触屏设备上恢复 */
 @media (pointer: coarse) {
-  html, body { cursor: auto !important; }
+  html, body, *, button, a, [role="button"] { 
+    cursor: auto !important; 
+  }
+  .custom-cursor { display: none !important; }
+}
+
+body, .page-wrapper, .code-window, .glass, .project-card, .philosophy-card {
+  transition: background-color 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+              border-color 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+              box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.main-title, .subtitle-text, h1, h2, h3, p, span, a {
+  transition: color 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   color: var(--text-primary); line-height: 1.5; overflow-x: hidden;
+  width: 100%;
 }
 
-.philosophy-stack-wrapper.mobile-scroll {
+.philosophy-section-container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 150px auto;
   display: flex;
-  overflow-x: auto;
-  overflow-y: hidden;
-  height: auto;
-  gap: 20px;
-  padding: 20px 0 40px 0;
-  perspective: none;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-
-.philosophy-stack-wrapper.mobile-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.philosophy-stack-wrapper.mobile-scroll .philosophy-card.stacked {
-  position: relative;
-  flex: 0 0 85vw;
-  height: auto;
-  min-height: 450px;
-  scroll-snap-align: center;
-  transform: none !important;
-  opacity: 1 !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-
-@media (max-width: 768px) {
-  .hero-full-screen { height: auto; padding: 100px 0; }
-  .single-window-section { margin-bottom: 60px; }
-  .philosophy-section-container { margin: 60px auto; }
-  .philosophy-card { padding: 40px 30px; border-radius: 24px; }
-  .projects-grid { grid-template-columns: 1fr; }
-  .section-header-left h2 { text-align: center; width: 100%; }
-}
-
-
-.page-wrapper {
-  position: relative; min-height: 100vh; width: 100%;
-  display: flex; flex-direction: column; align-items: center; padding: 0 20px; z-index: 1;
+  flex-direction: column;
+  align-items: center; 
 }
 
 .section-header-left {
   width: 100%;
-  max-width: 900px;
   text-align: left;
-  margin-bottom: 40px;
+  margin-bottom: 60px;
+  padding-left: 10%; 
+}
+
+/* --- Philosophy 布局 --- */
+.philosophy-stack-wrapper {
+  position: relative;
+  width: 90%;
+  max-width: 900px;
+  height: auto;
+  min-height: 550px;
+  perspective: 2000px;
+  margin: 20px auto 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.philosophy-card.stacked {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+  transform-origin: center center;
+}
+
+.page-wrapper {
+  position: relative; min-height: 100vh; width: 100%;
+  display: flex; flex-direction: column; align-items: center; padding: 0; z-index: 1;
+  overflow-x: hidden;
 }
 
 .grid-overlay {
@@ -143,30 +152,58 @@ body {
 }
 
 .hero-full-screen {
-  height: 100vh; display: flex; justify-content: center; align-items: center;
+  height: 100vh; width: 100%; display: flex; justify-content: center; align-items: center;
+  position: relative;
+}
+
+.philosophy-section-container, .work-theater-container, footer {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.hero-full-screen.left-aligned-hero {
+  justify-content: flex-start;
+  padding-left: 10%;
+}
+
+/* 核心修复：确保主标题容器可见并位于背景层之上 */
+.hero-full-screen.left-aligned-hero .hero-content {
+  text-align: left;
+  align-items: flex-start;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 20; /* 提升至网格和光源层之上 */
+  position: relative;
+}
+
+.hero-content {
+  position: relative;
+  max-width: 1200px;
 }
 
 .title-wrapper {
   display: flex; flex-direction: column; max-width: fit-content;
+  gap: 2rem; 
   will-change: transform;
 }
 
 .main-title {
   font-family: "Charter", "Georgia", serif;
-  font-size: clamp(2.2rem, 6vw, 4rem);
-  font-weight: 500; line-height: 1.2;
-  letter-spacing: 0.15em;
+  font-size: clamp(2.2rem, 6vw, 4.2rem);
+  font-weight: 500; 
+  line-height: 1.25; 
+  letter-spacing: 0.12em; 
+  color: var(--text-primary);
 }
 
 .subtitle-text {
   color: var(--subtitle-color);
   font-size: clamp(0.9rem, 1.8vw, 1.2rem);
-  margin-top: 16px; align-self: flex-end;
-  letter-spacing: 0.02em;
+  margin-top: 16px; align-self: flex-start;
+  letter-spacing: 0.05em; 
   font-weight: 300;
 }
-
-.subtitle-dash { color: var(--subtitle-color); font-weight: 500; margin-right: 4px; }
 
 .single-window-section {
   width: 100%; max-width: 900px; margin: 0 auto 100px auto;
@@ -179,30 +216,6 @@ body {
   border: 1px solid var(--glass-border);
 }
 
-.code-header { 
-  height: 40px; background: var(--code-header-bg); display: flex; 
-  align-items: center; padding: 0 16px; position: relative; justify-content: center;
-  border-bottom: 1px solid var(--glass-border);
-}
-.code-dots { display: flex; gap: 8px; position: absolute; left: 16px; }
-.code-title { color: var(--text-secondary); font-size: 13px; font-weight: 500; font-family: -apple-system, sans-serif; opacity: 0.7; }
-.control-dot { width: 12px; height: 12px; border-radius: 50%; }
-.red { background: #ff5f57; }
-.yellow { background: #febc2e; }
-.green { background: #28c840; }
-
-.code-content {
-  padding: 40px; font-family: "JetBrains Mono", "SF Mono", monospace;
-  font-size: 15px; line-height: 1.8; color: var(--code-text); text-align: left;
-}
-
-.code-content .key { color: var(--code-key); }
-.code-content .string { color: var(--code-string); }
-.code-content .comment { color: var(--code-comment); font-style: italic; opacity: 0.7; }
-.code-content .method { color: var(--code-method); }
-
-.settings-item { font-size: 1.05rem; }
-
 .mesh-gradient-container {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
   z-index: -10; background: var(--bg-claude); overflow: hidden;
@@ -211,6 +224,8 @@ body {
 .mesh-ball {
   position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.3;
   animation: float 30s infinite alternate ease-in-out;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .ball-1 { width: 80vw; height: 80vw; background: var(--mesh-1); top: -20%; left: -20%; }
@@ -218,9 +233,9 @@ body {
 .ball-3 { width: 60vw; height: 60vw; background: var(--mesh-3); top: 30%; left: 20%; animation-delay: -10s; }
 
 @keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(5%, 5%) scale(1.05); }
-  100% { transform: translate(-2%, -3%) scale(0.98); }
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(5%, 5%, 0) scale(1.05); }
+  100% { transform: translate3d(-2%, -3%, 0) scale(0.98); }
 }
 
 .spotlight-bg {
@@ -228,29 +243,33 @@ body {
   pointer-events: none; z-index: -5;
   background: linear-gradient(135deg, var(--spotlight-color) 0%, transparent 40%, var(--spotlight-color) 100%);
   filter: blur(80px); animation: bg-flow 20s infinite alternate ease-in-out;
+  will-change: opacity, transform;
 }
 
 @keyframes bg-flow {
-  0% { opacity: 0.4; transform: scale(1); }
-  100% { opacity: 0.7; transform: scale(1.1); }
+  0% { opacity: 0.4; transform: translate3d(0,0,0) scale(1); }
+  100% { opacity: 0.7; transform: translate3d(0,0,0) scale(1.1); }
 }
 
 .noise-overlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 999; opacity: 0.03;
+  pointer-events: none; z-index: 0; /* 移至底层，仅作为纹理，不再遮挡 */
+  opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(30px) saturate(160%);
-  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  backdrop-filter: var(--glass-blur) saturate(160%);
+  -webkit-backdrop-filter: var(--glass-blur) saturate(160%);
   border: 1px solid var(--glass-border);
 }
 
 .custom-cursor {
   position: fixed; top: 0; left: 0; width: 24px; height: 24px;
-  pointer-events: none; z-index: 2000; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+  pointer-events: none; z-index: 9999;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+  will-change: transform;
 }
 
 .custom-cursor path { fill: var(--cursor-color); }
@@ -260,35 +279,6 @@ body {
   cursor: none; transition: color 0.3s;
 }
 .interactive-toggle:hover { color: var(--accent-claude); }
-
-.philosophy-section-container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 150px auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.philosophy-stack-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 900px;
-  height: 550px;
-  perspective: 2000px;
-  margin-top: 20px;
-}
-
-.philosophy-card.stacked {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  margin-bottom: 0;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.12);
-  transform-origin: right center;
-}
 
 .philosophy-card { padding: 80px 60px; border-radius: 40px; }
 .manifesto-tag { font-size: 12px; text-transform: uppercase; color: var(--accent-claude); font-weight: 700; margin-bottom: 24px; display: block; letter-spacing: 0.1em; }
@@ -318,9 +308,11 @@ body {
 .project-card { 
   padding: 48px; border-radius: 36px; background: var(--glass-bg); 
   border: 1px solid var(--glass-border); text-align: left; 
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
-.project-card:hover { transform: translateY(-10px); box-shadow: var(--shadow-apple); }
+.project-card:hover { transform: translate3d(0, -10px, 0); box-shadow: var(--shadow-apple); }
 .project-tag { font-size: 11px; font-weight: 700; color: var(--accent-claude); margin-bottom: 20px; display: inline-block; letter-spacing: 0.05em; }
 
 .bottom-philosophy-quote {
@@ -330,4 +322,9 @@ body {
   color: var(--text-secondary);
   font-style: italic;
   opacity: 0.8;
+}
+
+.depth-stage-container {
+  will-change: transform;
+  transform: translateZ(0);
 }

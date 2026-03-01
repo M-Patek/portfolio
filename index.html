@@ -5,6 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Monetwl-Portfolio</title>
+    <script>
+      (function() {
+        const theme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.backgroundColor = theme === 'dark' ? '#1c1c1c' : '#f9f7f2';
+      })();
+    </script>
+    <style>
+      body { background-color: #1c1c1c; transition: background-color 0.3s ease; }
+      [data-theme='light'] body { background-color: #f9f7f2; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
